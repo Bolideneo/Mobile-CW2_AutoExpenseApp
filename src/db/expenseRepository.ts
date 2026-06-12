@@ -76,6 +76,9 @@ export const deleteExpense = (id: string): void => {
 };
 
 export const getTotalAmount = (): number => {
-  const rows = fetchRows('SELECT COALESCE(SUM(amount), 0) AS total FROM expenses');
-  return rows[0] ? Number((rows[0] as ExpenseRow & {total: number}).total ?? 0) : 0;
+  const result = getDatabase().execute(
+    'SELECT COALESCE(SUM(amount), 0) AS total FROM expenses',
+  );
+  const row = result.rows?._array?.[0] as {total: number} | undefined;
+  return row ? Number(row.total) : 0;
 };
