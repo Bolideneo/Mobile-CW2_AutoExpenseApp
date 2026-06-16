@@ -1,5 +1,5 @@
 import React, {useCallback, useEffect, useState} from 'react';
-import {FlatList, StyleSheet, Text, View} from 'react-native';
+import {FlatList, Pressable, StyleSheet, Text, View} from 'react-native';
 import type {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {ExpenseCard} from '../components/ExpenseCard';
 import {PrimaryButton} from '../components/PrimaryButton';
@@ -46,7 +46,14 @@ export const HomeScreen = ({navigation}: Props) => {
         data={expenses}
         keyExtractor={item => item.id}
         contentContainerStyle={styles.list}
-        renderItem={({item}) => <ExpenseCard expense={item} />}
+        renderItem={({item}) => (
+          <Pressable
+            onPress={() =>
+              navigation.navigate('ExpenseDetail', {expenseId: item.id})
+            }>
+            <ExpenseCard expense={item} />
+          </Pressable>
+        )}
         ListEmptyComponent={
           <View style={styles.empty}>
             <Text style={styles.emptyTitle}>No expenses yet</Text>

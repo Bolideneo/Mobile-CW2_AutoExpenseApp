@@ -3,6 +3,7 @@ import {NavigationContainer} from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {HomeScreen} from '../screens/HomeScreen';
 import {AddExpenseScreen} from '../screens/AddExpenseScreen';
+import {ExpenseDetailScreen} from '../screens/ExpenseDetailScreen';
 import {colors} from '../theme/colors';
 import type {RootStackParamList} from './types';
 
@@ -27,6 +28,11 @@ export const AppNavigator = () => (
         name="AddExpense"
         component={AddExpenseScreen}
         options={{title: 'Add Expense'}}
+      />
+      <Stack.Screen
+        name="ExpenseDetail"
+        component={ExpenseDetailScreen}
+        options={{title: 'Expense Detail'}}
       />
     </Stack.Navigator>
   </NavigationContainer>
