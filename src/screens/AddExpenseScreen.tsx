@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -9,6 +9,8 @@ import {
 import type {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {CategoryPicker} from '../components/CategoryPicker';
 import {FormInput} from '../components/FormInput';
+import {LocationBanner} from '../components/LocationBanner';
+import type {LocationBannerStatus} from '../components/LocationBanner';
 import {PrimaryButton} from '../components/PrimaryButton';
 import {insertExpense} from '../db/expenseRepository';
 import type {RootStackParamList} from '../navigation/types';
@@ -23,6 +25,12 @@ import {
   validateExpenseDraft,
   type ValidationErrors,
 } from '../utils/validateExpense';
+import {
+  captureExpenseLocation,
+  formatCoordinates,
+  mapLocationError,
+  type LocationErrorCode,
+} from '../services/locationService';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'AddExpense'>;
 
@@ -30,6 +38,30 @@ export const AddExpenseScreen = ({navigation}: Props) => {
   const [draft, setDraft] = useState<ExpenseDraft>(createEmptyDraft);
   const [errors, setErrors] = useState<ValidationErrors>({});
   const [saving, setSaving] = useState(false);
+  const [locationStatus, setLocationStatus] =
+    useState<LocationBannerStatus>('loading');
+  const [locationLabel, setLocationLabel] = useState<string>();
+  const [locationError, setLocationError] = useState<LocationErrorCode>();
+
+  const tagLocation = useCallback(async () => {
+    setLocationStatus('loading');
+    setLocationError(undefined);
+    setLocationLabel(undefined);
+    try {
+      const coords = await captureExpenseLocation();
+      setDraft(prev => ({...prev, ...coords}));
+      setLocationLabel(formatCoordinates(coords.latitude, coords.longitude));
+      setLocationStatus('success');
+    } catch (error) {
+      const code = mapLocationError(error);
+      setLocationError(code);
+      setLocationStatus(code === 'denied' ? 'denied' : 'error');
+    }
+  }, []);
+
+  useEffect(() => {
+    tagLocation();
+  }, [tagLocation]);
 
   const updateField = <K extends keyof ExpenseDraft>(
     key: K,
@@ -70,6 +102,12 @@ export const AddExpenseScreen = ({navigation}: Props) => {
       <ScrollView
         contentContainerStyle={styles.form}
         keyboardShouldPersistTaps="handled">
+        <LocationBanner
+          status={locationStatus}
+          coordinates={locationLabel}
+          errorCode={locationError}
+          onRetry={tagLocation}
+        />
         <FormInput
           label="Vendor"
           placeholder="e.g. Starbucks"
