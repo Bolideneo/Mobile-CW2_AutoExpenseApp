@@ -12,6 +12,7 @@ import {FormInput} from '../components/FormInput';
 import {LocationBanner} from '../components/LocationBanner';
 import type {LocationBannerStatus} from '../components/LocationBanner';
 import {PrimaryButton} from '../components/PrimaryButton';
+import {ReceiptCapture} from '../components/ReceiptCapture';
 import {insertExpense} from '../db/expenseRepository';
 import type {RootStackParamList} from '../navigation/types';
 import {
@@ -107,6 +108,11 @@ export const AddExpenseScreen = ({navigation}: Props) => {
           coordinates={locationLabel}
           errorCode={locationError}
           onRetry={tagLocation}
+        />
+        <ReceiptCapture
+          imageUri={draft.imageUri}
+          onImageSelected={uri => updateField('imageUri', uri)}
+          onImageRemoved={() => updateField('imageUri', undefined)}
         />
         <FormInput
           label="Vendor"
