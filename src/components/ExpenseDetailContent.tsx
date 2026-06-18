@@ -1,5 +1,5 @@
 import React from 'react';
-import {StyleSheet, Text, View} from 'react-native';
+import {Image, StyleSheet, Text, View} from 'react-native';
 import type {Expense} from '../types/expense';
 import {formatAmount} from '../types/expense';
 import {categoryColors, colors} from '../theme/colors';
@@ -37,6 +37,12 @@ export const ExpenseDetailContent = ({expense}: ExpenseDetailContentProps) => (
       ]}>
       <Text style={styles.badgeText}>{expense.category}</Text>
     </View>
+    {expense.imageUri ? (
+      <View style={styles.receiptBlock}>
+        <Text style={styles.receiptLabel}>Receipt</Text>
+        <Image source={{uri: expense.imageUri}} style={styles.receiptImage} />
+      </View>
+    ) : null}
     <DetailRow label="Date" value={expense.date} />
     <DetailRow label="Status" value={expense.status} />
     {expense.notes ? <DetailRow label="Notes" value={expense.notes} /> : null}
@@ -90,6 +96,20 @@ const styles = StyleSheet.create({
     color: colors.white,
     fontSize: typography.caption,
     fontWeight: '600',
+  },
+  receiptBlock: {
+    marginBottom: spacing.md,
+  },
+  receiptLabel: {
+    fontSize: typography.caption,
+    color: colors.textSecondary,
+    marginBottom: spacing.xs,
+  },
+  receiptImage: {
+    width: '100%',
+    height: 220,
+    borderRadius: 10,
+    backgroundColor: colors.background,
   },
   row: {
     paddingVertical: spacing.sm,
