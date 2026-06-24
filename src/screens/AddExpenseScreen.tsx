@@ -15,6 +15,7 @@ import {OcrStatusBanner} from '../components/OcrStatusBanner';
 import type {OcrBannerStatus} from '../components/OcrStatusBanner';
 import {PrimaryButton} from '../components/PrimaryButton';
 import {ReceiptCapture} from '../components/ReceiptCapture';
+import {VoiceNoteButton} from '../components/VoiceNoteButton';
 import {insertExpense} from '../db/expenseRepository';
 import type {RootStackParamList} from '../navigation/types';
 import {
@@ -199,6 +200,14 @@ export const AddExpenseScreen = ({navigation}: Props) => {
           multiline
           numberOfLines={3}
           error={errors.notes}
+        />
+        <VoiceNoteButton
+          onTranscript={text =>
+            updateField(
+              'notes',
+              draft.notes.trim() ? `${draft.notes.trim()} ${text}` : text,
+            )
+          }
         />
         <PrimaryButton
           label="Save Expense"
