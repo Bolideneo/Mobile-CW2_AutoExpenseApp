@@ -75,7 +75,7 @@ export const ReceiptCapture = ({
         </View>
       )}
       <Text style={styles.hint}>
-        Attach a receipt image for OCR extraction in a later step.
+        Scan or upload a receipt to auto-fill vendor, amount, and date.
       </Text>
     </View>
   );

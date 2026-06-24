@@ -11,6 +11,8 @@ import {CategoryPicker} from '../components/CategoryPicker';
 import {FormInput} from '../components/FormInput';
 import {LocationBanner} from '../components/LocationBanner';
 import type {LocationBannerStatus} from '../components/LocationBanner';
+import {OcrStatusBanner} from '../components/OcrStatusBanner';
+import type {OcrBannerStatus} from '../components/OcrStatusBanner';
 import {PrimaryButton} from '../components/PrimaryButton';
 import {ReceiptCapture} from '../components/ReceiptCapture';
 import {insertExpense} from '../db/expenseRepository';
@@ -32,6 +34,10 @@ import {
   mapLocationError,
   type LocationErrorCode,
 } from '../services/locationService';
+import {
+  extractReceiptData,
+  hasExtractedValues,
+} from '../services/ocrService';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'AddExpense'>;
 
@@ -43,6 +49,8 @@ export const AddExpenseScreen = ({navigation}: Props) => {
     useState<LocationBannerStatus>('loading');
   const [locationLabel, setLocationLabel] = useState<string>();
   const [locationError, setLocationError] = useState<LocationErrorCode>();
+  const [ocrStatus, setOcrStatus] = useState<OcrBannerStatus>('idle');
+  const [ocrSummary, setOcrSummary] = useState<string>();
 
   const tagLocation = useCallback(async () => {
     setLocationStatus('loading');
@@ -78,6 +86,45 @@ export const AddExpenseScreen = ({navigation}: Props) => {
     }
   };
 
+  const handleReceiptSelected = async (uri: string) => {
+    updateField('imageUri', uri);
+    setOcrStatus('loading');
+    setOcrSummary(undefined);
+
+    try {
+      const extracted = await extractReceiptData(uri);
+      setDraft(prev => ({
+        ...prev,
+        imageUri: uri,
+        vendor: extracted.vendor ?? prev.vendor,
+        amount: extracted.amount ?? prev.amount,
+        date: extracted.date ?? prev.date,
+      }));
+
+      if (hasExtractedValues(extracted)) {
+        const parts = [
+          extracted.vendor ? `Vendor: ${extracted.vendor}` : null,
+          extracted.amount ? `Amount: ${extracted.amount}` : null,
+          extracted.date ? `Date: ${extracted.date}` : null,
+        ].filter(Boolean);
+        setOcrSummary(parts.join(' · '));
+        setOcrStatus('success');
+      } else {
+        setOcrSummary('No readable fields found on this receipt.');
+        setOcrStatus('error');
+      }
+    } catch {
+      setOcrSummary('Could not read text from the receipt image.');
+      setOcrStatus('error');
+    }
+  };
+
+  const handleReceiptRemoved = () => {
+    updateField('imageUri', undefined);
+    setOcrStatus('idle');
+    setOcrSummary(undefined);
+  };
+
   const handleSave = () => {
     const validationErrors = validateExpenseDraft(draft);
     if (hasValidationErrors(validationErrors)) {
@@ -111,9 +158,10 @@ export const AddExpenseScreen = ({navigation}: Props) => {
         />
         <ReceiptCapture
           imageUri={draft.imageUri}
-          onImageSelected={uri => updateField('imageUri', uri)}
-          onImageRemoved={() => updateField('imageUri', undefined)}
+          onImageSelected={handleReceiptSelected}
+          onImageRemoved={handleReceiptRemoved}
         />
+        <OcrStatusBanner status={ocrStatus} summary={ocrSummary} />
         <FormInput
           label="Vendor"
           placeholder="e.g. Starbucks"
