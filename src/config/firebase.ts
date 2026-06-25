@@ -2,12 +2,12 @@ import {initializeApp, type FirebaseApp} from 'firebase/app';
 import {getFirestore, type Firestore} from 'firebase/firestore';
 
 export const firebaseConfig = {
-  apiKey: 'YOUR_API_KEY',
-  authDomain: 'YOUR_PROJECT.firebaseapp.com',
-  projectId: 'YOUR_PROJECT_ID',
-  storageBucket: 'YOUR_PROJECT.appspot.com',
-  messagingSenderId: 'YOUR_SENDER_ID',
-  appId: 'YOUR_APP_ID',
+  apiKey: 'AIzaSyCYXiBEmGD_OUxC2M2_JWqjXf1J8VSD914',
+  authDomain: 'mobilecw2-98b1b.firebaseapp.com',
+  projectId: 'mobilecw2-98b1b',
+  storageBucket: 'mobilecw2-98b1b.firebasestorage.app',
+  messagingSenderId: '123605310755',
+  appId: '1:123605310755:web:133a2ba2472eb100240096',
 };
 
 export const isFirebaseConfigured = (): boolean =>

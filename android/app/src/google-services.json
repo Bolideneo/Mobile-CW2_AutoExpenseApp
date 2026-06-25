@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "123605310755",
+    "project_id": "mobilecw2-98b1b",
+    "storage_bucket": "mobilecw2-98b1b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:123605310755:android:ad8922b73851864c240096",
+        "android_client_info": {
+          "package_name": "com.autoexpense"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAHO7EBAh-VpZhAnV7IlMlHG5Sf0_Bb3uA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
