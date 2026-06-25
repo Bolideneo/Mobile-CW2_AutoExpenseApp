@@ -8,6 +8,7 @@ export interface Expense {
   category: string;
   notes: string;
   imageUri?: string;
+  audioUri?: string;
   latitude?: number;
   longitude?: number;
   status: ExpenseStatus;
@@ -21,6 +22,7 @@ export interface ExpenseDraft {
   category: string;
   notes: string;
   imageUri?: string;
+  audioUri?: string;
   latitude?: number;
   longitude?: number;
 }

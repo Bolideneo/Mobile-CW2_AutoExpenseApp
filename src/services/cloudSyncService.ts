@@ -20,6 +20,7 @@ const expenseToCloudPayload = (expense: Expense) => ({
   category: expense.category,
   notes: expense.notes,
   imageUri: expense.imageUri ?? null,
+  audioUri: expense.audioUri ?? null,
   latitude: expense.latitude ?? null,
   longitude: expense.longitude ?? null,
   status: 'synced',

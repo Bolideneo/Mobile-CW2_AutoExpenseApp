@@ -20,6 +20,7 @@ const EXPENSES_TABLE_SQL = `
     category TEXT NOT NULL,
     notes TEXT DEFAULT '',
     image_uri TEXT,
+    audio_uri TEXT,
     latitude REAL,
     longitude REAL,
     status TEXT NOT NULL DEFAULT 'pending',
@@ -42,6 +43,16 @@ export const initDatabase = (): void => {
   db.execute(EXPENSES_TABLE_SQL);
   db.execute(EXPENSES_INDEX_SQL);
   db.execute(EXPENSES_STATUS_INDEX_SQL);
+  migrateDatabase(db);
+};
+
+const migrateDatabase = (db: QuickSQLiteConnection): void => {
+  const columns = (db.execute('PRAGMA table_info(expenses)').rows?._array ??
+    []) as {name: string}[];
+  const hasAudioUri = columns.some(column => column.name === 'audio_uri');
+  if (!hasAudioUri) {
+    db.execute('ALTER TABLE expenses ADD COLUMN audio_uri TEXT');
+  }
 };
 
 export const resetDatabase = (): void => {
@@ -57,6 +68,7 @@ export type ExpenseRow = {
   category: string;
   notes: string;
   image_uri: string | null;
+  audio_uri: string | null;
   latitude: number | null;
   longitude: number | null;
   status: string;
@@ -71,6 +83,7 @@ export const mapRowToExpense = (row: ExpenseRow) => ({
   category: row.category,
   notes: row.notes ?? '',
   imageUri: row.image_uri ?? undefined,
+  audioUri: row.audio_uri ?? undefined,
   latitude: row.latitude ?? undefined,
   longitude: row.longitude ?? undefined,
   status: row.status as 'pending' | 'synced' | 'failed',

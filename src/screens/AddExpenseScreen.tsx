@@ -15,6 +15,7 @@ import {OcrStatusBanner} from '../components/OcrStatusBanner';
 import type {OcrBannerStatus} from '../components/OcrStatusBanner';
 import {PrimaryButton} from '../components/PrimaryButton';
 import {ReceiptCapture} from '../components/ReceiptCapture';
+import {AudioNoteSection} from '../components/AudioNoteSection';
 import {VoiceNoteButton} from '../components/VoiceNoteButton';
 import {insertExpense} from '../db/expenseRepository';
 import type {RootStackParamList} from '../navigation/types';
@@ -208,6 +209,10 @@ export const AddExpenseScreen = ({navigation}: Props) => {
               draft.notes.trim() ? `${draft.notes.trim()} ${text}` : text,
             )
           }
+        />
+        <AudioNoteSection
+          audioUri={draft.audioUri}
+          onAudioChange={uri => updateField('audioUri', uri)}
         />
         <PrimaryButton
           label="Save Expense"

@@ -1,5 +1,6 @@
 import React from 'react';
 import {Image, StyleSheet, Text, View} from 'react-native';
+import {AudioNotePlayer} from './AudioNotePlayer';
 import type {Expense} from '../types/expense';
 import {formatAmount} from '../types/expense';
 import {categoryColors, colors} from '../theme/colors';
@@ -46,6 +47,7 @@ export const ExpenseDetailContent = ({expense}: ExpenseDetailContentProps) => (
     <DetailRow label="Date" value={expense.date} />
     <DetailRow label="Status" value={expense.status} />
     {expense.notes ? <DetailRow label="Notes" value={expense.notes} /> : null}
+    {expense.audioUri ? <AudioNotePlayer audioUri={expense.audioUri} /> : null}
     {expense.latitude != null && expense.longitude != null ? (
       <DetailRow
         label="Location"

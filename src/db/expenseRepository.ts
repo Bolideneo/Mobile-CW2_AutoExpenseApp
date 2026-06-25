@@ -33,6 +33,7 @@ export const insertExpense = (draft: ExpenseDraft): Expense => {
     category: draft.category,
     notes: draft.notes.trim(),
     imageUri: draft.imageUri,
+    audioUri: draft.audioUri,
     latitude: draft.latitude,
     longitude: draft.longitude,
     status: 'pending',
@@ -41,8 +42,8 @@ export const insertExpense = (draft: ExpenseDraft): Expense => {
 
   getDatabase().execute(
     `INSERT INTO expenses
-      (id, vendor, amount, date, category, notes, image_uri, latitude, longitude, status, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      (id, vendor, amount, date, category, notes, image_uri, audio_uri, latitude, longitude, status, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       expense.id,
       expense.vendor,
@@ -51,6 +52,7 @@ export const insertExpense = (draft: ExpenseDraft): Expense => {
       expense.category,
       expense.notes,
       expense.imageUri ?? null,
+      expense.audioUri ?? null,
       expense.latitude ?? null,
       expense.longitude ?? null,
       expense.status,
