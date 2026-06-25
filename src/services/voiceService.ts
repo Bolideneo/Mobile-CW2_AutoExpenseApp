@@ -1,7 +1,7 @@
 import Voice, {
   type SpeechErrorEvent,
   type SpeechResultsEvent,
-} from '@react-native-voice/voice';
+} from '@dev-amirzubair/react-native-voice';
 import {PermissionsAndroid, Platform} from 'react-native';
 
 const MIC_MESSAGE =
