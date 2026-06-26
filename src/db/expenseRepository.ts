@@ -1,5 +1,12 @@
 import type {Expense, ExpenseDraft, ExpenseStatus} from '../types/expense';
-import {getDatabase, mapRowToExpense, type ExpenseRow} from './database';
+import {encryptField} from '../utils/fieldEncryption';
+import {
+  executeSql,
+  getDatabase,
+  initDatabase,
+  mapRowToExpense,
+  type ExpenseRow,
+} from './database';
 
 const generateId = (): string =>
   `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
@@ -24,7 +31,16 @@ export const getPendingExpenses = (): Expense[] =>
     "SELECT * FROM expenses WHERE status = 'pending' ORDER BY created_at ASC",
   ).map(mapRowToExpense);
 
+export const getUnsyncedExpenses = (): Expense[] =>
+  fetchRows(
+    "SELECT * FROM expenses WHERE status IN ('pending', 'failed') ORDER BY created_at ASC",
+  ).map(mapRowToExpense);
+
+export const getUnsyncedCount = (): number => getUnsyncedExpenses().length;
+
 export const insertExpense = (draft: ExpenseDraft): Expense => {
+  initDatabase();
+
   const expense: Expense = {
     id: generateId(),
     vendor: draft.vendor.trim(),
@@ -36,27 +52,81 @@ export const insertExpense = (draft: ExpenseDraft): Expense => {
     audioUri: draft.audioUri,
     latitude: draft.latitude,
     longitude: draft.longitude,
+    locationCity: draft.locationCity,
+    locationCountry: draft.locationCountry,
     status: 'pending',
     createdAt: new Date().toISOString(),
   };
 
-  getDatabase().execute(
+  executeSql(
     `INSERT INTO expenses
-      (id, vendor, amount, date, category, notes, image_uri, audio_uri, latitude, longitude, status, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      (id, vendor, amount, date, category, notes, image_uri, audio_uri, latitude, longitude, location_city, location_country, status, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       expense.id,
-      expense.vendor,
+      encryptField(expense.vendor) ?? '',
       expense.amount,
       expense.date,
       expense.category,
-      expense.notes,
-      expense.imageUri ?? null,
+      encryptField(expense.notes),
+      encryptField(expense.imageUri),
       expense.audioUri ?? null,
       expense.latitude ?? null,
       expense.longitude ?? null,
+      expense.locationCity ?? null,
+      expense.locationCountry ?? null,
       expense.status,
       expense.createdAt,
+    ],
+  );
+
+  return expense;
+};
+
+export const updateExpense = (id: string, draft: ExpenseDraft): Expense | null => {
+  initDatabase();
+
+  const existing = getExpenseById(id);
+  if (!existing) {
+    return null;
+  }
+
+  const expense: Expense = {
+    ...existing,
+    vendor: draft.vendor.trim(),
+    amount: parseFloat(draft.amount) || 0,
+    date: draft.date,
+    category: draft.category,
+    notes: draft.notes.trim(),
+    imageUri: draft.imageUri,
+    audioUri: draft.audioUri,
+    latitude: draft.latitude,
+    longitude: draft.longitude,
+    locationCity: draft.locationCity,
+    locationCountry: draft.locationCountry,
+    status: 'pending',
+  };
+
+  executeSql(
+    `UPDATE expenses SET
+      vendor = ?, amount = ?, date = ?, category = ?, notes = ?,
+      image_uri = ?, audio_uri = ?, latitude = ?, longitude = ?,
+      location_city = ?, location_country = ?, status = ?
+     WHERE id = ?`,
+    [
+      encryptField(expense.vendor) ?? '',
+      expense.amount,
+      expense.date,
+      expense.category,
+      encryptField(expense.notes),
+      encryptField(expense.imageUri),
+      expense.audioUri ?? null,
+      expense.latitude ?? null,
+      expense.longitude ?? null,
+      expense.locationCity ?? null,
+      expense.locationCountry ?? null,
+      expense.status,
+      id,
     ],
   );
 
