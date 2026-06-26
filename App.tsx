@@ -1,6 +1,7 @@
 import React, {useEffect} from 'react';
 import {StatusBar, useColorScheme} from 'react-native';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
+import {AuthProvider} from './src/context/AuthContext';
 import {AppNavigator} from './src/navigation/AppNavigator';
 import {initDatabase} from './src/db/database';
 import {colors} from './src/theme/colors';
@@ -18,7 +19,9 @@ function App() {
         barStyle="light-content"
         backgroundColor={colors.primary}
       />
-      <AppNavigator />
+      <AuthProvider>
+        <AppNavigator />
+      </AuthProvider>
     </SafeAreaProvider>
   );
 }
