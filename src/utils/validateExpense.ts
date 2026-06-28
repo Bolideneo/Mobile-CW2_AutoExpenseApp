@@ -36,6 +36,10 @@ export const validateExpenseDraft = (
     errors.category = 'Select a category';
   }
 
+  if (!draft.imageUri?.trim()) {
+    errors.imageUri = 'Receipt photo is required';
+  }
+
   if (draft.notes.length > 200) {
     errors.notes = 'Notes must be 200 characters or fewer';
   }

@@ -14,12 +14,14 @@ import {spacing, typography} from '../theme/styles';
 
 type ReceiptCaptureProps = {
   imageUri?: string;
+  error?: string;
   onImageSelected: (uri: string) => void;
   onImageRemoved: () => void;
 };
 
 export const ReceiptCapture = ({
   imageUri,
+  error,
   onImageSelected,
   onImageRemoved,
 }: ReceiptCaptureProps) => {
@@ -39,9 +41,9 @@ export const ReceiptCapture = ({
 
   return (
     <View style={styles.wrapper}>
-      <Text style={styles.label}>Receipt photo</Text>
+      <Text style={styles.label}>Receipt photo *</Text>
       {imageUri ? (
-        <View style={styles.previewBlock}>
+        <View style={[styles.previewBlock, error ? styles.fieldError : null]}>
           <Image source={{uri: imageUri}} style={styles.preview} />
           <View style={styles.previewActions}>
             <Pressable
@@ -55,7 +57,7 @@ export const ReceiptCapture = ({
           </View>
         </View>
       ) : (
-        <View style={styles.actions}>
+        <View style={[styles.actions, error ? styles.fieldError : null]}>
           {loading ? (
             <ActivityIndicator color={colors.primary} />
           ) : (
@@ -77,6 +79,7 @@ export const ReceiptCapture = ({
       <Text style={styles.hint}>
         Scan or upload a receipt to auto-fill vendor, amount, and date.
       </Text>
+      {error ? <Text style={styles.error}>{error}</Text> : null}
     </View>
   );
 };
@@ -156,6 +159,14 @@ const styles = StyleSheet.create({
   hint: {
     fontSize: typography.caption,
     color: colors.textSecondary,
+    marginTop: spacing.xs,
+  },
+  fieldError: {
+    borderColor: colors.error,
+  },
+  error: {
+    fontSize: typography.caption,
+    color: colors.error,
     marginTop: spacing.xs,
   },
 });

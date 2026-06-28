@@ -11,6 +11,8 @@ export interface Expense {
   audioUri?: string;
   latitude?: number;
   longitude?: number;
+  locationCity?: string;
+  locationCountry?: string;
   status: ExpenseStatus;
   createdAt: string;
 }
@@ -25,6 +27,8 @@ export interface ExpenseDraft {
   audioUri?: string;
   latitude?: number;
   longitude?: number;
+  locationCity?: string;
+  locationCountry?: string;
 }
 
 export const EXPENSE_CATEGORIES = [
@@ -43,6 +47,20 @@ export const createEmptyDraft = (): ExpenseDraft => ({
   date: new Date().toISOString().split('T')[0],
   category: 'Other',
   notes: '',
+});
+
+export const expenseToDraft = (expense: Expense): ExpenseDraft => ({
+  vendor: expense.vendor,
+  amount: expense.amount.toFixed(2),
+  date: expense.date,
+  category: expense.category,
+  notes: expense.notes,
+  imageUri: expense.imageUri,
+  audioUri: expense.audioUri,
+  latitude: expense.latitude,
+  longitude: expense.longitude,
+  locationCity: expense.locationCity,
+  locationCountry: expense.locationCountry,
 });
 
 export const formatAmount = (amount: number): string =>

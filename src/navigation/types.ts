@@ -1,5 +1,5 @@
 export type RootStackParamList = {
   Home: undefined;
-  AddExpense: undefined;
+  AddExpense: {expenseId?: string} | undefined;
   ExpenseDetail: {expenseId: string};
 };
