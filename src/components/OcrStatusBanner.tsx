@@ -8,26 +8,50 @@ export type OcrBannerStatus = 'idle' | 'loading' | 'success' | 'error';
 type OcrStatusBannerProps = {
   status: OcrBannerStatus;
   summary?: string;
+  aiEnabled?: boolean;
+  usedAi?: boolean;
+  aiMessage?: string;
+  aiRawResponse?: string;
 };
 
-const statusCopy: Record<OcrBannerStatus, string> = {
+const statusCopy = (
+  aiEnabled: boolean,
+  usedAi: boolean,
+): Record<OcrBannerStatus, string> => ({
   idle: 'Scan a receipt to auto-fill details',
-  loading: 'Extracting receipt data with OCR...',
-  success: 'Receipt data extracted',
+  loading: aiEnabled
+    ? 'Reading receipt with OCR + AI...'
+    : 'Extracting receipt data with OCR...',
+  success: usedAi
+    ? 'Receipt analyzed with AI'
+    : aiEnabled
+      ? 'Receipt extracted (local OCR fallback)'
+      : 'Receipt data extracted',
   error: 'OCR failed — enter details manually',
-};
+});
 
-export const OcrStatusBanner = ({status, summary}: OcrStatusBannerProps) => {
+export const OcrStatusBanner = ({
+  status,
+  summary,
+  aiEnabled = false,
+  usedAi = false,
+  aiMessage,
+  aiRawResponse,
+}: OcrStatusBannerProps) => {
   if (status === 'idle') {
     return null;
   }
 
   const tint =
     status === 'success'
-      ? colors.success
+      ? usedAi
+        ? colors.success
+        : colors.warning
       : status === 'loading'
         ? colors.primary
         : colors.warning;
+
+  const labels = statusCopy(aiEnabled, usedAi);
 
   return (
     <View style={[styles.banner, {borderColor: tint}]}>
@@ -37,9 +61,16 @@ export const OcrStatusBanner = ({status, summary}: OcrStatusBannerProps) => {
         ) : (
           <View style={[styles.dot, {backgroundColor: tint}]} />
         )}
-        <Text style={styles.title}>{statusCopy[status]}</Text>
+        <Text style={styles.title}>{labels[status]}</Text>
       </View>
+      {aiMessage ? <Text style={styles.aiMessage}>{aiMessage}</Text> : null}
       {summary ? <Text style={styles.summary}>{summary}</Text> : null}
+      {aiRawResponse ? (
+        <View style={styles.aiResponseBox}>
+          <Text style={styles.aiResponseLabel}>AI response</Text>
+          <Text style={styles.aiResponseText}>{aiRawResponse}</Text>
+        </View>
+      ) : null}
     </View>
   );
 };
@@ -68,10 +99,38 @@ const styles = StyleSheet.create({
     color: colors.text,
     flex: 1,
   },
-  summary: {
+  aiMessage: {
     fontSize: typography.caption,
     color: colors.textSecondary,
     marginTop: spacing.sm,
     marginLeft: spacing.md + 10,
+  },
+  summary: {
+    fontSize: typography.caption,
+    color: colors.text,
+    marginTop: spacing.xs,
+    marginLeft: spacing.md + 10,
+    fontWeight: '600',
+  },
+  aiResponseBox: {
+    marginTop: spacing.sm,
+    marginLeft: spacing.md + 10,
+    marginRight: spacing.sm,
+    backgroundColor: colors.background,
+    borderRadius: 8,
+    padding: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  aiResponseLabel: {
+    fontSize: typography.caption,
+    color: colors.textSecondary,
+    marginBottom: spacing.xs,
+    fontWeight: '600',
+  },
+  aiResponseText: {
+    fontSize: typography.caption,
+    color: colors.text,
+    fontFamily: 'monospace',
   },
 });

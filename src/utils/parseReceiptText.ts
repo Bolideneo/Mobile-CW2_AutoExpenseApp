@@ -2,6 +2,7 @@ export type ParsedReceipt = {
   vendor?: string;
   amount?: string;
   date?: string;
+  category?: string;
 };
 
 const TOTAL_PATTERN =
