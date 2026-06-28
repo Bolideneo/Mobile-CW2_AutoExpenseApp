@@ -1,9 +1,10 @@
 import {doc, setDoc} from 'firebase/firestore';
 import {getFirestoreDb, isFirebaseConfigured} from '../config/firebase';
 import {
-  getPendingExpenses,
+  getUnsyncedExpenses,
   updateExpenseStatus,
 } from '../db/expenseRepository';
+import {getCurrentUserId} from './authService';
 import type {Expense} from '../types/expense';
 
 export type SyncResult = {
@@ -13,7 +14,31 @@ export type SyncResult = {
   message?: string;
 };
 
-const expenseToCloudPayload = (expense: Expense) => ({
+const SYNC_TIMEOUT_MS = 20000;
+
+const withTimeout = <T>(promise: Promise<T>, label: string): Promise<T> =>
+  new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      reject(
+        new Error(
+          `${label} timed out. Check internet, Firestore rules, and that Firestore is enabled.`,
+        ),
+      );
+    }, SYNC_TIMEOUT_MS);
+
+    promise
+      .then(value => {
+        clearTimeout(timer);
+        resolve(value);
+      })
+      .catch(error => {
+        clearTimeout(timer);
+        reject(error);
+      });
+  });
+
+const expenseToCloudPayload = (expense: Expense, userId: string) => ({
+  userId,
   vendor: expense.vendor,
   amount: expense.amount,
   date: expense.date,
@@ -23,13 +48,14 @@ const expenseToCloudPayload = (expense: Expense) => ({
   audioUri: expense.audioUri ?? null,
   latitude: expense.latitude ?? null,
   longitude: expense.longitude ?? null,
+  locationCity: expense.locationCity ?? null,
+  locationCountry: expense.locationCountry ?? null,
   status: 'synced',
   createdAt: expense.createdAt,
   syncedAt: new Date().toISOString(),
 });
 
-export const getPendingSyncCount = (): number =>
-  getPendingExpenses().length;
+export const getPendingSyncCount = (): number => getUnsyncedExpenses().length;
 
 export const syncPendingExpenses = async (): Promise<SyncResult> => {
   if (!isFirebaseConfigured()) {
@@ -38,6 +64,16 @@ export const syncPendingExpenses = async (): Promise<SyncResult> => {
       failed: 0,
       skipped: true,
       message: 'Add your Firebase config in src/config/firebase.ts',
+    };
+  }
+
+  const userId = getCurrentUserId();
+  if (!userId) {
+    return {
+      synced: 0,
+      failed: 0,
+      skipped: true,
+      message: 'Sign in with Google to sync expenses to the cloud',
     };
   }
 
@@ -51,23 +87,45 @@ export const syncPendingExpenses = async (): Promise<SyncResult> => {
     };
   }
 
-  const pending = getPendingExpenses();
+  const pending = getUnsyncedExpenses();
   if (pending.length === 0) {
     return {synced: 0, failed: 0, skipped: false, message: 'All expenses synced'};
   }
 
   let synced = 0;
   let failed = 0;
+  let lastError: string | undefined;
 
   for (const expense of pending) {
+    if (expense.status === 'failed') {
+      updateExpenseStatus(expense.id, 'pending');
+    }
+
     try {
-      await setDoc(doc(db, 'expenses', expense.id), expenseToCloudPayload(expense));
+      await withTimeout(
+        setDoc(
+          doc(db, 'users', userId, 'expenses', expense.id),
+          expenseToCloudPayload(expense, userId),
+        ),
+        'Cloud sync',
+      );
       updateExpenseStatus(expense.id, 'synced');
       synced += 1;
-    } catch {
+    } catch (error) {
       updateExpenseStatus(expense.id, 'failed');
       failed += 1;
+      lastError =
+        error instanceof Error ? error.message : 'Cloud sync failed';
     }
+  }
+
+  if (failed > 0 && synced === 0 && lastError) {
+    return {
+      synced,
+      failed,
+      skipped: false,
+      message: lastError,
+    };
   }
 
   return {
