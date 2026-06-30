@@ -24,7 +24,7 @@ type LocationBannerProps = {
 };
 
 const statusCopy: Record<LocationBannerStatus, string> = {
-  loading: 'Capturing GPS location...',
+  loading: 'Capturing location...',
   success: 'Location tagged',
   denied: 'Location permission denied',
   error: 'Could not capture location',
@@ -33,7 +33,8 @@ const statusCopy: Record<LocationBannerStatus, string> = {
 const errorHints: Record<LocationErrorCode, string> = {
   denied: 'Enable location in settings to tag this expense.',
   unavailable: 'GPS signal unavailable. You can still save without location.',
-  timeout: 'Location timed out. You can still save without location.',
+  timeout:
+    'Location timed out. Turn on GPS, allow Precise location, then tap Retry (try near a window or outdoors).',
 };
 
 export const LocationBanner = ({
