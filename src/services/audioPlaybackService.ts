@@ -1,53 +1,100 @@
+import Sound from 'react-native-nitro-sound';
 import {Platform} from 'react-native';
-import Sound from 'react-native-sound';
 
-Sound.setCategory('Playback');
+let playing = false;
+let playbackResolve: (() => void) | null = null;
+let playbackReject: ((error: Error) => void) | null = null;
 
-let currentSound: Sound | null = null;
-
-const normalizePath = (uri: string): string =>
-  uri.startsWith('file://') ? uri.replace('file://', '') : uri;
-
-export const playAudio = (uri: string): Promise<void> =>
-  new Promise((resolve, reject) => {
-    stopAudio();
-
-    const path = normalizePath(uri);
-    const sound = new Sound(path, '', error => {
-      if (error) {
-        reject(error);
-        return;
-      }
-
-      if (Platform.OS === 'android') {
-        sound.setSpeakerphoneOn(true);
-      }
-
-      currentSound = sound;
-      sound.play(success => {
-        sound.release();
-        if (currentSound === sound) {
-          currentSound = null;
-        }
-        if (success) {
-          resolve();
-        } else {
-          reject(new Error('Playback failed'));
-        }
-      });
-    });
-  });
-
-export const stopAudio = (): void => {
-  if (!currentSound) {
-    return;
+export const normalizeAudioUri = (uri: string): string => {
+  const trimmed = uri.trim();
+  if (!trimmed) {
+    return trimmed;
   }
 
-  const sound = currentSound;
-  currentSound = null;
-  sound.stop(() => {
-    sound.release();
+  if (
+    trimmed.startsWith('file://') ||
+    trimmed.startsWith('content://') ||
+    trimmed.startsWith('http')
+  ) {
+    return trimmed;
+  }
+
+  if (trimmed.startsWith('/')) {
+    return Platform.OS === 'android' ? trimmed : `file://${trimmed}`;
+  }
+
+  return trimmed;
+};
+
+const clearPlaybackListeners = (): void => {
+  Sound.removePlaybackEndListener();
+  Sound.removePlayBackListener();
+};
+
+const finishPlayback = (): void => {
+  playing = false;
+  clearPlaybackListeners();
+  playbackResolve?.();
+  playbackResolve = null;
+  playbackReject = null;
+};
+
+const failPlayback = (error: Error): void => {
+  playing = false;
+  clearPlaybackListeners();
+  playbackReject?.(error);
+  playbackResolve = null;
+  playbackReject = null;
+};
+
+const resetPlayer = async (): Promise<void> => {
+  clearPlaybackListeners();
+  playing = false;
+  playbackResolve = null;
+  playbackReject = null;
+
+  try {
+    await Sound.stopPlayer();
+  } catch {
+    // Player may already be idle.
+  }
+};
+
+export const playAudio = async (uri: string): Promise<void> => {
+  const normalizedUri = normalizeAudioUri(uri);
+  if (!normalizedUri) {
+    throw new Error('Audio file path is missing.');
+  }
+
+  await resetPlayer();
+
+  return new Promise((resolve, reject) => {
+    playbackResolve = resolve;
+    playbackReject = reject;
+
+    Sound.startPlayer(normalizedUri)
+      .then(() => {
+        playing = true;
+        Sound.addPlaybackEndListener(() => {
+          finishPlayback();
+        });
+      })
+      .catch(error => {
+        failPlayback(
+          error instanceof Error
+            ? error
+            : new Error('Could not start audio playback.'),
+        );
+      });
   });
 };
 
-export const isAudioPlaying = (): boolean => currentSound?.isPlaying() ?? false;
+export const stopAudio = (): void => {
+  playing = false;
+  clearPlaybackListeners();
+  playbackResolve = null;
+  playbackReject = null;
+  Sound.stopPlayer().catch(() => undefined);
+};
+
+export const isAudioPlaying = (): boolean => playing;

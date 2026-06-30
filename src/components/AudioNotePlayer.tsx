@@ -1,8 +1,9 @@
 import React, {useEffect, useState} from 'react';
-import {ActivityIndicator, Pressable, StyleSheet, Text, View} from 'react-native';
-import {playAudio, stopAudio} from '../services/audioPlaybackService';
+import {Pressable, StyleSheet, Text, View} from 'react-native';
+import {isAudioPlaying, playAudio, stopAudio} from '../services/audioPlaybackService';
 import {colors} from '../theme/colors';
 import {spacing, typography} from '../theme/styles';
+import {PlayIcon, StopIcon, WaveBars} from './voice/VoiceUiParts';
 
 type AudioNotePlayerProps = {
   audioUri: string;
@@ -14,18 +15,27 @@ export const AudioNotePlayer = ({audioUri}: AudioNotePlayerProps) => {
 
   useEffect(
     () => () => {
-      stopAudio();
+      if (isAudioPlaying()) {
+        stopAudio();
+      }
     },
     [],
   );
 
-  const handlePlay = async () => {
+  const handleToggle = async () => {
     setError(undefined);
+
+    if (playing) {
+      stopAudio();
+      setPlaying(false);
+      return;
+    }
+
     setPlaying(true);
     try {
       await playAudio(audioUri);
     } catch {
-      setError('Could not play this voice note.');
+      setError('Could not play this voice note. Try re-recording on Edit Expense.');
     } finally {
       setPlaying(false);
     }
@@ -34,17 +44,30 @@ export const AudioNotePlayer = ({audioUri}: AudioNotePlayerProps) => {
   return (
     <View style={styles.wrapper}>
       <Text style={styles.label}>Voice note</Text>
-      <Pressable
-        onPress={handlePlay}
-        disabled={playing}
-        style={[styles.button, playing && styles.buttonDisabled]}>
-        {playing ? (
-          <ActivityIndicator color={colors.white} size="small" />
-        ) : (
-          <Text style={styles.buttonText}>Play voice note</Text>
-        )}
-      </Pressable>
-      <Text style={styles.hint}>Plays through the device speaker</Text>
+      <View style={styles.card}>
+        <View style={styles.iconWrap}>
+          <WaveBars active={playing} color={colors.accent} />
+        </View>
+        <View style={styles.textWrap}>
+          <Text style={styles.title}>
+            {playing ? 'Playing…' : 'Recorded voice note'}
+          </Text>
+          <Text style={styles.hint}>Plays through the device speaker</Text>
+        </View>
+        <Pressable
+          onPress={handleToggle}
+          style={({pressed}) => [
+            styles.playButton,
+            playing && styles.stopButton,
+            pressed && styles.playButtonPressed,
+          ]}>
+          {playing ? (
+            <StopIcon size={16} />
+          ) : (
+            <PlayIcon size={16} />
+          )}
+        </Pressable>
+      </View>
       {error ? <Text style={styles.error}>{error}</Text> : null}
     </View>
   );
@@ -62,31 +85,50 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     marginBottom: spacing.xs,
   },
-  button: {
-    alignSelf: 'flex-start',
-    backgroundColor: colors.primary,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    borderRadius: 8,
-    minWidth: 140,
+  card: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    backgroundColor: '#ECFDF5',
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+    borderRadius: 12,
+    padding: spacing.md,
+  },
+  iconWrap: {
+    width: 40,
     alignItems: 'center',
   },
-  buttonDisabled: {
-    opacity: 0.8,
+  textWrap: {
+    flex: 1,
   },
-  buttonText: {
-    color: colors.white,
-    fontSize: typography.caption,
-    fontWeight: '600',
+  title: {
+    fontSize: typography.body,
+    fontWeight: '700',
+    color: colors.text,
   },
   hint: {
     fontSize: typography.caption,
     color: colors.textSecondary,
-    marginTop: spacing.xs,
+    marginTop: 2,
+  },
+  playButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.accent,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stopButton: {
+    backgroundColor: colors.error,
+  },
+  playButtonPressed: {
+    opacity: 0.88,
   },
   error: {
     fontSize: typography.caption,
     color: colors.error,
-    marginTop: spacing.xs,
+    marginTop: spacing.sm,
   },
 });

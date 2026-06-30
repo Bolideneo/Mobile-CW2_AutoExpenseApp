@@ -1,5 +1,11 @@
 import React, {useEffect, useState} from 'react';
-import {ActivityIndicator, Pressable, StyleSheet, Text, View} from 'react-native';
+import {
+  ActivityIndicator,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import {
   cancelRecording,
   mapRecordError,
@@ -10,6 +16,14 @@ import {
 import {playAudio, stopAudio} from '../services/audioPlaybackService';
 import {colors} from '../theme/colors';
 import {spacing, typography} from '../theme/styles';
+import {
+  MicIcon,
+  PlayIcon,
+  RecordDotIcon,
+  StopIcon,
+  VoiceCard,
+  WaveBars,
+} from './voice/VoiceUiParts';
 
 type AudioNoteSectionProps = {
   audioUri?: string;
@@ -81,94 +95,185 @@ export const AudioNoteSection = ({
     setError(undefined);
   };
 
+  const footer = recording
+    ? 'Recording in progress — tap stop when finished'
+    : audioUri
+      ? 'Recording saved — play it back before saving the expense'
+      : 'Record a spoken note played through the speaker';
+
   return (
-    <View style={styles.wrapper}>
-      <Text style={styles.label}>Voice recording</Text>
-      <View style={styles.actions}>
-        {recording ? (
-          <Pressable onPress={handleStop} style={[styles.button, styles.stopButton]}>
-            <Text style={styles.buttonText}>Stop recording</Text>
-          </Pressable>
-        ) : (
-          <Pressable onPress={handleRecord} style={styles.button}>
-            <Text style={styles.buttonText}>Record voice</Text>
-          </Pressable>
-        )}
+    <VoiceCard
+      title="Audio note"
+      subtitle="Record and play back a voice memo"
+      accentColor={colors.accent}
+      active={recording}
+      icon={<RecordDotIcon size={12} />}
+      footer={footer}
+      error={error}>
+      <View style={styles.body}>
         {audioUri && !recording ? (
-          <>
-            <Pressable
-              onPress={handlePlay}
-              disabled={playing}
-              style={[styles.button, styles.playButton]}>
-              {playing ? (
-                <ActivityIndicator color={colors.white} size="small" />
-              ) : (
-                <Text style={styles.buttonText}>Play</Text>
-              )}
-            </Pressable>
-            <Pressable onPress={handleRemove} style={[styles.button, styles.removeButton]}>
-              <Text style={styles.buttonText}>Remove</Text>
-            </Pressable>
-          </>
+          <View style={styles.savedCard}>
+            <View style={styles.savedIcon}>
+              <WaveBars active={playing} color={colors.accent} />
+            </View>
+            <View style={styles.savedText}>
+              <Text style={styles.savedTitle}>Recording ready</Text>
+              <Text style={styles.savedHint}>Saved to this expense</Text>
+            </View>
+            <View style={styles.savedActions}>
+              <Pressable
+                onPress={handlePlay}
+                disabled={playing}
+                style={({pressed}) => [
+                  styles.iconAction,
+                  styles.playAction,
+                  pressed && styles.iconActionPressed,
+                ]}>
+                {playing ? (
+                  <ActivityIndicator color={colors.white} size="small" />
+                ) : (
+                  <PlayIcon size={16} />
+                )}
+              </Pressable>
+              <Pressable
+                onPress={handleRemove}
+                style={({pressed}) => [
+                  styles.iconAction,
+                  styles.removeAction,
+                  pressed && styles.iconActionPressed,
+                ]}>
+                <Text style={styles.removeLabel}>✕</Text>
+              </Pressable>
+            </View>
+          </View>
         ) : null}
+
+        <Pressable
+          onPress={recording ? handleStop : handleRecord}
+          style={({pressed}) => [
+            styles.recordWrap,
+            pressed && styles.recordWrapPressed,
+          ]}>
+          <View
+            style={[
+              styles.recordOuter,
+              recording && styles.recordOuterActive,
+            ]}>
+            <View
+              style={[
+                styles.recordInner,
+                recording ? styles.recordInnerActive : styles.recordInnerIdle,
+              ]}>
+              {recording ? (
+                <StopIcon size={22} />
+              ) : (
+                <MicIcon size={28} color={colors.white} />
+              )}
+            </View>
+          </View>
+          <Text style={styles.recordLabel}>
+            {recording ? 'Tap to stop' : 'Tap to record'}
+          </Text>
+          <WaveBars active={recording} color={colors.error} />
+        </Pressable>
       </View>
-      <Text style={styles.hint}>
-        {recording
-          ? 'Recording… tap Stop when finished'
-          : audioUri
-            ? 'Voice note saved — play it back before saving the expense'
-            : 'Record a spoken note (played through the speaker)'}
-      </Text>
-      {error ? <Text style={styles.error}>{error}</Text> : null}
-    </View>
+    </VoiceCard>
   );
 };
 
 const styles = StyleSheet.create({
-  wrapper: {
-    marginBottom: spacing.md,
+  body: {
+    gap: spacing.md,
   },
-  label: {
-    fontSize: typography.caption,
-    fontWeight: '600',
-    color: colors.text,
-    marginBottom: spacing.xs,
-  },
-  actions: {
+  savedCard: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
+    alignItems: 'center',
     gap: spacing.sm,
+    backgroundColor: '#ECFDF5',
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+    borderRadius: 12,
+    padding: spacing.md,
   },
-  button: {
-    backgroundColor: colors.primaryLight,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    borderRadius: 8,
-    minWidth: 110,
+  savedIcon: {
+    width: 40,
     alignItems: 'center',
   },
-  stopButton: {
-    backgroundColor: colors.error,
+  savedText: {
+    flex: 1,
   },
-  playButton: {
-    backgroundColor: colors.primary,
+  savedTitle: {
+    fontSize: typography.body,
+    fontWeight: '700',
+    color: colors.text,
   },
-  removeButton: {
-    backgroundColor: colors.textSecondary,
-  },
-  buttonText: {
-    color: colors.white,
-    fontSize: typography.caption,
-    fontWeight: '600',
-  },
-  hint: {
+  savedHint: {
     fontSize: typography.caption,
     color: colors.textSecondary,
-    marginTop: spacing.xs,
+    marginTop: 2,
   },
-  error: {
-    fontSize: typography.caption,
-    color: colors.error,
-    marginTop: spacing.xs,
+  savedActions: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  iconAction: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  iconActionPressed: {
+    opacity: 0.85,
+  },
+  playAction: {
+    backgroundColor: colors.accent,
+  },
+  removeAction: {
+    backgroundColor: colors.background,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  removeLabel: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.textSecondary,
+  },
+  recordWrap: {
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingVertical: spacing.sm,
+  },
+  recordWrapPressed: {
+    opacity: 0.92,
+  },
+  recordOuter: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FEE2E2',
+  },
+  recordOuterActive: {
+    backgroundColor: '#FECACA',
+  },
+  recordInner: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  recordInnerIdle: {
+    backgroundColor: colors.error,
+  },
+  recordInnerActive: {
+    backgroundColor: '#B91C1C',
+  },
+  recordLabel: {
+    fontSize: typography.body,
+    fontWeight: '600',
+    color: colors.text,
   },
 });

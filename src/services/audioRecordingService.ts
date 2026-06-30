@@ -1,5 +1,5 @@
 import {PermissionsAndroid, Platform} from 'react-native';
-import AudioRecorderPlayer from 'react-native-audio-recorder-player';
+import Sound from 'react-native-nitro-sound';
 
 const MIC_MESSAGE =
   'Auto Expense uses the microphone to record voice notes for expenses.';
@@ -40,7 +40,7 @@ export const startRecording = async (): Promise<void> => {
   }
 
   try {
-    await AudioRecorderPlayer.startRecorder();
+    await Sound.startRecorder();
     recording = true;
   } catch {
     throw new Error('unavailable');
@@ -53,8 +53,8 @@ export const stopRecording = async (): Promise<string> => {
   }
 
   try {
-    const path = await AudioRecorderPlayer.stopRecorder();
-    AudioRecorderPlayer.removeRecordBackListener();
+    const path = await Sound.stopRecorder();
+    Sound.removeRecordBackListener();
     recording = false;
     return path;
   } catch {
@@ -69,9 +69,9 @@ export const cancelRecording = async (): Promise<void> => {
   }
 
   try {
-    await AudioRecorderPlayer.stopRecorder();
+    await Sound.stopRecorder();
   } finally {
-    AudioRecorderPlayer.removeRecordBackListener();
+    Sound.removeRecordBackListener();
     recording = false;
   }
 };
